@@ -11,12 +11,16 @@ use Psr\Log\LoggerInterface;
 
 class FFMpeg
 {
+    /** @var Filesystems */
     protected static $filesystems;
 
+    /** @var array */
     private static $temporaryFiles = [];
 
+    /** @var Disk */
     protected $disk;
 
+    /** @var BaseFFMpeg */
     protected $ffmpeg;
 
     public function __construct(Filesystems $filesystems, ConfigRepository $config, LoggerInterface $logger)
@@ -37,11 +41,17 @@ class FFMpeg
         );
     }
 
+    /**
+     * @return Filesystems
+     */
     public static function getFilesystems(): Filesystems
     {
         return static::$filesystems;
     }
 
+    /**
+     * @return string
+     */
     public static function newTemporaryFile(): string
     {
         return self::$temporaryFiles[] = tempnam(sys_get_temp_dir(), 'laravel-ffmpeg');
@@ -54,6 +64,10 @@ class FFMpeg
         }
     }
 
+    /**
+     * @param Filesystem $filesystem
+     * @return FFMpeg
+     */
     public function fromFilesystem(Filesystem $filesystem): FFMpeg
     {
         $this->disk = new Disk($filesystem);
@@ -61,6 +75,10 @@ class FFMpeg
         return $this;
     }
 
+    /**
+     * @param string $diskName
+     * @return FFMpeg
+     */
     public function fromDisk(string $diskName): FFMpeg
     {
         $filesystem = static::getFilesystems()->disk($diskName);
@@ -69,6 +87,10 @@ class FFMpeg
         return $this;
     }
 
+    /**
+     * @param string $path
+     * @return Media
+     */
     public function open($path): Media
     {
         $file = $this->disk->newFile($path);

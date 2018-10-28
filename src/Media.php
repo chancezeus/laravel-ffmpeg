@@ -6,44 +6,72 @@ use Closure;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\Filters\Audio\SimpleFilter;
 use FFMpeg\Filters\FilterInterface;
+use FFMpeg\Media\AbstractStreamableMedia;
 use FFMpeg\Media\MediaTypeInterface;
 
 /**
- * @method mixed save(\FFMpeg\Format\FormatInterface $format, $outputPathfile)
+ * @method mixed save($format, $outputPathFile)
  */
 class Media
 {
+    /** @var File */
     protected $file;
 
+    /** @var MediaTypeInterface|\FFMpeg\Media\Video */
     protected $media;
 
+    /**
+     * @param File $file
+     * @param MediaTypeInterface $media
+     */
     public function __construct(File $file, MediaTypeInterface $media)
     {
         $this->file  = $file;
         $this->media = $media;
     }
 
+    /**
+     * @return bool
+     */
     public function isFrame(): bool
     {
         return $this instanceof Frame;
     }
 
+    /**
+     * @return File
+     */
     public function getFile(): File
     {
         return $this->file;
     }
 
+    /**
+     * @return int
+     */
     public function getDurationInSeconds(): int
     {
-        return $this->getDurationInMiliseconds() / 1000;
+        return $this->getDurationInMilliseconds() / 1000;
     }
 
+    /**
+     * @return \FFMpeg\FFProbe\DataMapping\Stream|null
+     */
     public function getFirstStream()
     {
-        return $this->media->getStreams()->first();
+        $media = $this->media;
+
+        if ($media instanceof AbstractStreamableMedia) {
+            return $media->getStreams()->first();
+        }
+
+        return null;
     }
 
-    public function getDurationInMiliseconds(): float
+    /**
+     * @return float
+     */
+    public function getDurationInMilliseconds(): float
     {
         $stream = $this->getFirstStream();
 
@@ -56,39 +84,62 @@ class Media
         if ($format->has('duration')) {
             return $format->get('duration') * 1000;
         }
+
+        return 0;
     }
 
+    /**
+     * @return MediaExporter
+     */
     public function export(): MediaExporter
     {
         return new MediaExporter($this);
     }
 
+    /**
+     * @return HLSPlaylistExporter
+     */
     public function exportForHLS(): HLSPlaylistExporter
     {
         return new HLSPlaylistExporter($this);
     }
 
-    public function getFrameFromString(string $timecode): Frame
+    /**
+     * @param string $timeCode
+     * @return Frame
+     */
+    public function getFrameFromString(string $timeCode): Frame
     {
-        return $this->getFrameFromTimecode(
-            TimeCode::fromString($timecode)
+        return $this->getFrameFromTimeCode(
+            TimeCode::fromString($timeCode)
         );
     }
 
+    /**
+     * @param float $quantity
+     * @return Frame
+     */
     public function getFrameFromSeconds(float $quantity): Frame
     {
-        return $this->getFrameFromTimecode(
+        return $this->getFrameFromTimeCode(
             TimeCode::fromSeconds($quantity)
         );
     }
 
-    public function getFrameFromTimecode(TimeCode $timecode): Frame
+    /**
+     * @param TimeCode $timeCode
+     * @return Frame
+     */
+    public function getFrameFromTimeCode(TimeCode $timeCode): Frame
     {
-        $frame = $this->media->frame($timecode);
+        $frame = $this->media->frame($timeCode);
 
         return new Frame($this->getFile(), $frame);
     }
 
+    /**
+     * @return static
+     */
     public function addFilter(): Media
     {
         $arguments = func_get_args();
@@ -106,11 +157,18 @@ class Media
         return $this;
     }
 
+    /**
+     * @param $argument
+     * @return static
+     */
     protected function selfOrArgument($argument)
     {
         return ($argument === $this->media) ? $this : $argument;
     }
 
+    /**
+     * @return MediaTypeInterface
+     */
     public function __invoke(): MediaTypeInterface
     {
         return $this->media;
@@ -119,6 +177,7 @@ class Media
     public function __clone()
     {
         if ($this->media) {
+            /** @var \FFMpeg\Filters\FiltersCollection $clonedFilters */
             $clonedFilters = clone $this->media->getFiltersCollection();
 
             $this->media = clone $this->media;
@@ -127,6 +186,11 @@ class Media
         }
     }
 
+    /**
+     * @param string $method
+     * @param array $parameters
+     * @return static
+     */
     public function __call($method, $parameters)
     {
         return $this->selfOrArgument(

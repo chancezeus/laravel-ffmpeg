@@ -14,6 +14,11 @@ class SegmentedFilter implements VideoFilterInterface
 
     protected $priority;
 
+    /**
+     * @param string $playlistPath
+     * @param int $segmentLength
+     * @param int $priority
+     */
     public function __construct(string $playlistPath, int $segmentLength = 10, $priority = 0)
     {
         $this->playlistPath  = $playlistPath;
@@ -21,21 +26,35 @@ class SegmentedFilter implements VideoFilterInterface
         $this->priority      = $priority;
     }
 
+    /**
+     * @return string
+     */
     public function getPlaylistPath(): string
     {
         return $this->playlistPath;
     }
 
+    /**
+     * @return int
+     */
     public function getSegmentLength(): int
     {
         return $this->segmentLength;
     }
 
+    /**
+     * @return int
+     */
     public function getPriority()
     {
         return $this->priority;
     }
 
+    /**
+     * @param Video $video
+     * @param VideoInterface $format
+     * @return array
+     */
     public function apply(Video $video, VideoInterface $format)
     {
         return [
