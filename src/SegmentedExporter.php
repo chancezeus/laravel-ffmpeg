@@ -86,13 +86,21 @@ class SegmentedExporter extends MediaExporter
     }
 
     /**
-     * @param string $playlistPath
+     * @param string $path
+     * @return Media
+     */
+    public function save(string $path): Media
+    {
+        $this->setPlaylistPath($path);
+
+        return parent::save($this->getPlaylistFullPath());
+    }
+
+    /**
      * @return static
      */
-    public function saveStream(string $playlistPath): MediaExporter
+    public function saveStream(): MediaExporter
     {
-        $this->setPlaylistPath($playlistPath);
-
         $this->media->addFilter(
             $this->getFilter()
         );
