@@ -122,7 +122,7 @@ class MediaExporter
 
         if (!$disk->isLocal()) {
             $this->moveSavedFilesToRemoteDisk($destinationPath, $file);
-        } else {
+        } else if ($this->visibility !== null) {
             $this->updateVisibilityForSavedFiles($file);
         }
 
