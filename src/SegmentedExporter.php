@@ -111,7 +111,7 @@ class SegmentedExporter extends MediaExporter
      */
     private function getFullPathForFilename(string $filename)
     {
-        $path = trim(pathinfo($this->playlistPath, PATHINFO_DIRNAME), DIRECTORY_SEPARATOR);
+        $path = rtrim(pathinfo($this->playlistPath, PATHINFO_DIRNAME), DIRECTORY_SEPARATOR);
 
         if ($this->targetPath) {
             $path = $path . DIRECTORY_SEPARATOR . trim($this->targetPath, DIRECTORY_SEPARATOR);
@@ -136,7 +136,7 @@ class SegmentedExporter extends MediaExporter
     public function getPlaylistPath(): string
     {
         if ($this->targetPath) {
-            return trim($this->targetPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->getPlaylistFilename();
+            return rtrim($this->targetPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->getPlaylistFilename();
         }
 
         return $this->getPlaylistFilename();
