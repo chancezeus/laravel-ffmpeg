@@ -28,12 +28,13 @@ class HLSPlaylistExporter extends MediaExporter
      * @param \FFMpeg\Format\VideoInterface $format
      * @param callable|null $callback
      * @param string|null $targetPath
+     * @param string|null $targetName
      * @param string|null $playlistInfo
      * @return static
      */
-    public function addFormat(VideoInterface $format, callable $callback = null, string $targetPath = null, string $playlistInfo = null): MediaExporter
+    public function addFormat(VideoInterface $format, callable $callback = null, string $targetPath = null, string $targetName = null, string $playlistInfo = null): MediaExporter
     {
-        $segmentedExporter = $this->getSegmentedExporterFromFormat($format, $targetPath, $playlistInfo);
+        $segmentedExporter = $this->getSegmentedExporterFromFormat($format, $targetPath, $targetName, $playlistInfo);
 
         if ($callback) {
             $callback($segmentedExporter->getMedia());
