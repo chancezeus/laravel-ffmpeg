@@ -6,9 +6,7 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use League\Flysystem\Adapter\Local as LocalAdapter;
 
 /**
- * @method bool put($path, $contents, $visibility = null)
- * @method array|false read($path)
- * @method void setVisibility($path, $visibility)
+ * @mixin \Illuminate\Filesystem\FilesystemAdapter
  */
 class Disk
 {

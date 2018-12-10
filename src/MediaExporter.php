@@ -3,9 +3,20 @@
 namespace Pbmedia\LaravelFFMpeg;
 
 use FFMpeg\Format\FormatInterface;
+use Illuminate\Support\Facades\File as FileFacade;
+use Neutron\TemporaryFilesystem\Manager as FsManager;
 
 class MediaExporter
 {
+    /** @var FsManager */
+    protected $fs;
+
+    /** @var string */
+    protected $tempPath;
+
+    /** @var string */
+    protected $fsId;
+
     /** @var Media */
     protected $media;
 
@@ -26,6 +37,8 @@ class MediaExporter
      */
     public function __construct(Media $media)
     {
+        $this->fs = FsManager::create();
+
         $this->media = $media;
 
         $this->disk = $media->getFile()->getDisk();
@@ -85,7 +98,7 @@ class MediaExporter
      * @param string|null $visibility
      * @return static
      */
-    public function withVisibility(string $visibility = null): MediaExporter
+    public function withVisibility(string $visibility = null)
     {
         $this->visibility = $visibility;
 
@@ -103,16 +116,14 @@ class MediaExporter
 
         $destinationPath = $this->getDestinationPathForSaving($file);
 
-        $this->createDestinationPathForSaving($file);
+        $this->createDestinationPathForSaving($destinationPath);
 
         $this->{$this->saveMethod}($destinationPath);
 
         if (!$disk->isLocal()) {
-            $this->moveSavedFileToRemoteDisk($destinationPath, $file);
-        }
-
-        if ($this->visibility !== null) {
-            $disk->setVisibility($path, $this->visibility);
+            $this->moveSavedFilesToRemoteDisk($destinationPath, $file);
+        } else {
+            $this->updateVisibilityForSavedFiles($file);
         }
 
         return $this->media;
@@ -120,42 +131,68 @@ class MediaExporter
 
     /**
      * @param string $localSourcePath
-     * @param File $fileOnRemoteDisk
+     * @param File $target
      * @return bool
      */
-    protected function moveSavedFileToRemoteDisk($localSourcePath, File $fileOnRemoteDisk): bool
+    protected function moveSavedFilesToRemoteDisk(string $localSourcePath, File $target): bool
     {
-        return $fileOnRemoteDisk->put($localSourcePath) && @unlink($localSourcePath);
+        $localDirectory = pathinfo($localSourcePath, PATHINFO_DIRNAME);
+        $disk = $target->getDisk();
+        
+        $regex = '#^' . preg_quote($this->tempPath, '#') . '#';
+        
+        foreach (FileFacade::allFiles($localDirectory) as $sourceFile) {
+            $remotePath = preg_replace($regex, '', $sourceFile);
+            
+            if (!$disk->put($remotePath, file_get_contents($sourceFile), $this->visibility)) {
+                return false;
+            }
+        }
+
+        $this->fs->clean($this->fsId);
+        
+        return true;
+    }
+
+    /**
+     * @param File $file
+     */
+    protected function updateVisibilityForSavedFiles(File $file)
+    {
+        $directory = pathinfo($file->getPath(), PATHINFO_DIRNAME);
+        $disk = $file->getDisk();
+        
+        foreach ($disk->allFiles($directory) as $filePath) {
+            $disk->setVisibility($filePath, $this->visibility);
+        }
     }
 
     /**
      * @param File $file
      * @return string
      */
-    private function getDestinationPathForSaving(File $file): string
+    protected function getDestinationPathForSaving(File $file): string
     {
         if (!$file->getDisk()->isLocal()) {
-            $tempName = FFMpeg::newTemporaryFile();
+            $this->fsId = uniqid('laravel-ffmpeg');
 
-            return $tempName . '.' . $file->getExtension();
+            $this->tempPath = rtrim($this->fs->createTemporaryDirectory(0777, 50, $this->fsId), DIRECTORY_SEPARATOR);
+
+            return $this->tempPath . DIRECTORY_SEPARATOR . $file->getPath();
         }
 
         return $file->getFullPath();
     }
 
     /**
-     * @param File $file
+     * @param string $file
      * @return bool
      */
-    private function createDestinationPathForSaving(File $file)
+    protected function createDestinationPathForSaving(string $file)
     {
-        if (!$file->getDisk()->isLocal()) {
-            return false;
-        }
+        $directory = pathinfo($file, PATHINFO_DIRNAME);
 
-        $directory = pathinfo($file->getPath(), PATHINFO_DIRNAME);
-
-        return $file->getDisk()->createDirectory($directory);
+        return FileFacade::makeDirectory($directory, 0755, true);
     }
 
     /**

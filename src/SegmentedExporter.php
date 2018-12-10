@@ -91,16 +91,19 @@ class SegmentedExporter extends MediaExporter
      */
     public function save(string $path): Media
     {
-        $this->setPlaylistPath($path);
-
-        return parent::save($this->getPlaylistPath());
+        throw new \RuntimeException('Do not call save directly use saveStream');
     }
 
     /**
+     * @param string $playlistPath
      * @return static
      */
-    public function saveStream(): MediaExporter
+    public function saveStream(string $playlistPath): MediaExporter
     {
+        $this->setPlaylistPath($playlistPath);
+
+        $this->createDestinationPathForSaving($this->getPlaylistFullPath());
+        
         $this->media->addFilter(
             $this->getFilter()
         );
@@ -119,7 +122,7 @@ class SegmentedExporter extends MediaExporter
      */
     private function getFullPathForFilename(string $filename)
     {
-        $path = rtrim(pathinfo($this->playlistPath, PATHINFO_DIRNAME), DIRECTORY_SEPARATOR);
+        $path = pathinfo($this->playlistPath, PATHINFO_DIRNAME);
 
         if ($this->targetPath) {
             $path = $path . DIRECTORY_SEPARATOR . trim($this->targetPath, DIRECTORY_SEPARATOR);

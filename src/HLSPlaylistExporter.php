@@ -175,7 +175,7 @@ class HLSPlaylistExporter extends MediaExporter
         $this->prepareSegmentedExporters();
 
         foreach ($this->segmentedExporters as $key => $segmentedExporter) {
-            $segmentedExporter->save($this->playlistPath);
+            $segmentedExporter->saveStream($this->playlistPath);
         }
     }
 

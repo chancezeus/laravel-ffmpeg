@@ -22,6 +22,7 @@
         "illuminate/log": "5.7.*",
         "illuminate/support": "5.7.*",
         "league/flysystem": "~1.0",
+        "neutron/temporary-filesystem": "^2.1.1",
         "php-ffmpeg/php-ffmpeg": "^0.13",
         "symfony/process": "~4.0"
     },
