@@ -93,7 +93,7 @@ class SegmentedExporter extends MediaExporter
     {
         $this->setPlaylistPath($path);
 
-        return parent::save($this->getPlaylistFullPath());
+        return parent::save($this->getPlaylistPath());
     }
 
     /**
@@ -144,7 +144,7 @@ class SegmentedExporter extends MediaExporter
     public function getPlaylistPath(): string
     {
         if ($this->targetPath) {
-            return rtrim($this->targetPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->getPlaylistFilename();
+            return trim($this->targetPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->getPlaylistFilename();
         }
 
         return $this->getPlaylistFilename();
