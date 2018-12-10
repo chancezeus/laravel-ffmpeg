@@ -192,7 +192,11 @@ class MediaExporter
     {
         $directory = pathinfo($file, PATHINFO_DIRNAME);
 
-        return FileFacade::makeDirectory($directory, 0755, true);
+        if (!FileFacade::exists($directory, 0755, true)) {
+            return FileFacade::makeDirectory($directory, 0755, true);
+        }
+
+        return FileFacade::isDirectory($directory);
     }
 
     /**
